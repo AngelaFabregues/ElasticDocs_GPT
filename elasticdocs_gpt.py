@@ -43,36 +43,53 @@ def search(query_text):
                         "boost": 1
                     }
                 }
-            }],
-            "filter": [{
-                "exists": {
-                    "field": "title-vector"
-                }
             }]
+# Disabling embeddings
+#            ,
+#            "filter": [{
+#                "exists": {
+#                    "field": "title-vector"
+#                }
+#            }]
         }
     }
 
-    knn = {
-        "field": "title-vector",
-        "k": 1,
-        "num_candidates": 20,
-        "query_vector_builder": {
-            "text_embedding": {
-                "model_id": "sentence-transformers__all-distilroberta-v1",
-                "model_text": query_text
-            }
-        },
-        "boost": 24
-    }
+# Disabling embeddings
+#    knn = {
+#        "field": "title-vector",
+#        "k": 1,
+#        "num_candidates": 20,
+#        "query_vector_builder": {
+#            "text_embedding": {
+#                "model_id": "sentence-transformers__all-distilroberta-v1",
+#                "model_text": query_text
+#            }
+#        },
+#        "boost": 24
+#    }
 
     fields = ["title", "body_content", "url"]
     index = 'search-elastic-docs'
+
+# For debugging, prints all the titles
+#    resp = es.search(index=index, query={"match_all": {}})
+#    print("Got %d Hits. These are the titles:" % resp['hits']['total']['value'])
+#    for hit in resp['hits']['hits']:
+#        print("\t"+hit["_source"]["title"])
+
+
     resp = es.search(index=index,
                      query=query,
-                     knn=knn,
+# Disabling embeddings
+#                     knn=knn,
                      fields=fields,
                      size=1,
                      source=False)
+
+# Handling no query results found case
+    if resp['hits']['total']['value'] == 0:
+        print('There is no content available to answer your requirement.')
+        return 'There is no content available to answer your requirement.', ""
 
     body = resp['hits']['hits'][0]['fields']['body_content'][0]
     url = resp['hits']['hits'][0]['fields']['url'][0]
@@ -108,10 +125,14 @@ with st.form("chat_form"):
 negResponse = "I'm unable to answer the question based on the information I have from Elastic Docs."
 if submit_button:
     resp, url = search(query)
-    prompt = f"Answer this question: {query}\nUsing only the information from this Elastic Doc: {resp}\nIf the answer is not contained in the supplied doc reply '{negResponse}' and nothing else"
-    answer = chat_gpt(prompt)
-    
-    if negResponse in answer:
-        st.write(f"ChatGPT: {answer.strip()}")
+# Handling no query results found case
+    if url=="":
+        st.write(f"Elasticsearch: {resp}")
     else:
-        st.write(f"ChatGPT: {answer.strip()}\n\nDocs: {url}")
+        prompt = f"Answer this question: {query}\nUsing only the information from this Elastic Doc: {resp}\nIf the answer is not contained in the supplied doc reply '{negResponse}' and nothing else"
+        answer = chat_gpt(prompt)
+        
+        if negResponse in answer:
+            st.write(f"ChatGPT: {answer.strip()}")
+        else:
+            st.write(f"ChatGPT: {answer.strip()}\n\nDocs: {url}")

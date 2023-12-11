@@ -27,3 +27,19 @@ Combining the search power of Elasticsearch with the Question Answering power of
   ![inference](https://github.com/jeffvestal/ElasticDocs_GPT/blob/main/images/elasticDocs%20GPT%20-%20inference%20processor.png)
   
   ![pii](https://raw.githubusercontent.com/jeffvestal/ElasticDocs_GPT/main/images/elasticDocs%20GPT%20-%20redact%20pii.png)
+
+# Setup
+
+1. Elasticsearch cluster (Elastic Cloud)
+1. OpenAI account and API generation
+1. Load an embedding model into Elasticsearch (Eland as bridge to load a Hugging Face model) <-- Does not work in local because of dependency issues with torch. Neither in Google colab.
+1. Elasticsearch index creation and content ingestion (using a web crawler)
+1. Search application with streamlit <-- adapted to work without embeddings.
+
+# Run
+1. Launch Elastic Cloud
+1. Check there are documents in search-elastic-docs index
+1. Export credentials (source credentials.source)
+1. `pip install -r requirements.txt`
+1. `streamlit run elasticdocs_gpt.py`
+1. `open http://192.168.1.149:8501/` and test it with "Show me the API call for an inference processor"
